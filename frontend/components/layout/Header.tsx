@@ -28,8 +28,8 @@ export const Header = ({ onMenuClick }: { onMenuClick: () => void }) => {
           {/* Breadcrumb or Search could go here */}
         </div>
         <div className="flex items-center gap-x-4 lg:gap-x-6">
-          <button 
-            type="button" 
+          <button
+            type="button"
             className="-m-2.5 p-2.5 text-slate-400 hover:text-slate-500 dark:hover:text-slate-300 transition-colors"
             onClick={() => dispatch(toggleDarkMode())}
           >

@@ -1,7 +1,6 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
-import { PageHeader } from '@/components/layout/PageHeader';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
@@ -11,8 +10,10 @@ import { Modal } from '@/components/ui/Modal';
 import { 
   Building, Car, AlertTriangle, 
   Search, Plus, Zap, Accessibility, Users, 
-  CheckCircle2, Ban, Key, Layers, MapPin, Trash2, Sparkles, ShieldAlert, Info
+  CheckCircle2, Ban, Key, Layers, MapPin, Trash2, Sparkles, ShieldAlert, Info, ShieldCheck,
+  BarChart3, Activity, Calendar, QrCode, Sliders
 } from 'lucide-react';
+import Link from 'next/link';
 import { useDispatch } from 'react-redux';
 import { showWarning } from '@/store/slices/uiSlice';
 import { useConfirm } from '@/providers/ConfirmProvider';
@@ -36,12 +37,33 @@ import {
   useGetFloorsQuery
 } from '@/services/organizationApi';
 import { RequireModule } from '@/components/auth/RequireModule';
+import { ParkoraMap } from '@/components/parking/ParkoraMap';
+import { ParkoraConfig } from '@/components/parking/ParkoraConfig';
+import { ParkoraSessions } from '@/components/parking/ParkoraSessions';
+import { ParkoraReservations } from '@/components/parking/ParkoraReservations';
+import { ParkoraAnalytics } from '@/components/parking/ParkoraAnalytics';
+import { SmartiParkNav } from '@/components/parking/SmartiParkNav';
 
 export default function OrganizationParkingPage() {
   const dispatch = useDispatch();
   const confirm = useConfirm();
 
-  const [activeTab, setActiveTab] = useState<'areas' | 'slots' | 'violations'>('slots');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'map' | 'slots' | 'areas' | 'sessions' | 'reservations' | 'violations' | 'config'>('dashboard');
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const tab = params.get('tab');
+      if (tab) {
+        if (tab === 'bays' || tab === 'slots') setActiveTab('slots');
+        else if (tab === 'zones' || tab === 'areas') setActiveTab('areas');
+        else if (tab === 'map' || tab === 'mapview') setActiveTab('map');
+        else if (tab === 'bookings' || tab === 'reservations') setActiveTab('reservations');
+        else if (tab === 'settings' || tab === 'config') setActiveTab('config');
+        else if (['dashboard', 'sessions', 'violations'].includes(tab)) setActiveTab(tab as any);
+      }
+    }
+  }, []);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedAreaFilter, setSelectedAreaFilter] = useState<string>('ALL');
   const [selectedStatusFilter, setSelectedStatusFilter] = useState<string>('ALL');
@@ -767,263 +789,283 @@ export default function OrganizationParkingPage() {
 
   return (
     <RequireModule moduleCode="PARKING_MANAGEMENT">
-      <div className="space-y-8 max-w-[1600px] mx-auto pb-16">
-        {/* Header */}
-        <PageHeader
-          title="SmartiPark • Parking & Bay Operations"
-          description="Configure parking zones, allocate vehicle bays to residents and guests, and enforce real-time property compliance."
-        />
-
-        {/* Top KPI Metrics Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-          <Card className="rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl shadow-sm hover:shadow-md transition-shadow">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Parking Zones</span>
-                <div className="w-10 h-10 rounded-2xl bg-indigo-50 dark:bg-indigo-950/60 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
-                  <Building className="w-5 h-5" />
-                </div>
-              </div>
-              <div className="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">{areas.length}</div>
-              <p className="text-xs text-slate-400 mt-1.5 font-medium">Configured basements & zones</p>
-            </CardContent>
-          </Card>
-
-          <Card className="rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl shadow-sm hover:shadow-md transition-shadow">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Total Registered Bays</span>
-                <div className="w-10 h-10 rounded-2xl bg-blue-50 dark:bg-blue-950/60 flex items-center justify-center text-blue-600 dark:text-blue-400">
-                  <Layers className="w-5 h-5" />
-                </div>
-              </div>
-              <div className="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">{totalSlotsCount}</div>
-              <p className="text-xs text-emerald-600 dark:text-emerald-400 mt-1.5 font-medium flex items-center gap-1">
-                <CheckCircle2 className="w-3.5 h-3.5" />
-                {availableSlotsCount} free & available
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card className="rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl shadow-sm hover:shadow-md transition-shadow">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Bay Occupancy</span>
-                <div className="w-10 h-10 rounded-2xl bg-emerald-50 dark:bg-emerald-950/60 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
-                  <Car className="w-5 h-5" />
-                </div>
-              </div>
-              <div className="flex items-baseline gap-2">
-                <span className="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">{occupancyRate}%</span>
-                <span className="text-xs text-slate-400">({occupiedSlotsCount} / {totalSlotsCount})</span>
-              </div>
-              <div className="w-full bg-slate-100 dark:bg-slate-800 h-1.5 rounded-full overflow-hidden mt-3">
-                <div className="bg-emerald-500 h-full rounded-full transition-all" style={{ width: `${occupancyRate}%` }} />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl shadow-sm hover:shadow-md transition-shadow">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Violations & Fines</span>
-                <div className="w-10 h-10 rounded-2xl bg-rose-50 dark:bg-rose-950/60 flex items-center justify-center text-rose-600 dark:text-rose-400">
-                  <AlertTriangle className="w-5 h-5" />
-                </div>
-              </div>
-              <div className="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">{activeViolationsCount}</div>
-              <p className="text-xs text-rose-500 mt-1.5 font-medium">Pending enforcement</p>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Tab Selection Navigation */}
-        <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-4">
-          <div className="flex items-center gap-2 bg-slate-100 dark:bg-slate-800/80 p-1.5 rounded-2xl border border-slate-200/50 dark:border-slate-700/50">
-            <Button 
-              variant={activeTab === 'slots' ? 'primary' : 'ghost'} 
-              onClick={() => setActiveTab('slots')}
-              className="rounded-xl px-5 text-sm font-semibold h-10 gap-2"
-            >
-              <Car className="w-4 h-4" />
-              Bays & Allocations
-              <Badge className="ml-1 bg-white/20 text-xs px-2 py-0.5">{slots.length}</Badge>
-            </Button>
-            <Button 
-              variant={activeTab === 'areas' ? 'primary' : 'ghost'} 
-              onClick={() => setActiveTab('areas')}
-              className="rounded-xl px-5 text-sm font-semibold h-10 gap-2"
-            >
-              <Building className="w-4 h-4" />
-              Parking Zones
-              <Badge className="ml-1 bg-white/20 text-xs px-2 py-0.5">{areas.length}</Badge>
-            </Button>
-            <Button 
-              variant={activeTab === 'violations' ? 'primary' : 'ghost'} 
-              onClick={() => setActiveTab('violations')}
-              className="rounded-xl px-5 text-sm font-semibold h-10 gap-2"
-            >
-              <AlertTriangle className="w-4 h-4" />
-              Violations Log
-              {activeViolationsCount > 0 && (
-                <Badge className="ml-1 bg-rose-500 text-white text-xs px-2 py-0.5">{activeViolationsCount}</Badge>
-              )}
-            </Button>
-          </div>
-
-          {/* Primary Action Buttons */}
-          <div className="flex items-center gap-3">
-            {activeTab === 'slots' && (
+      <div className="space-y-6 max-w-[1600px] mx-auto pb-16">
+        {/* Unified SmartiPark Navigation Bar - Stays fixed in the single top position */}
+        <SmartiParkNav
+          activeTab={activeTab}
+          onTabChange={(tab) => setActiveTab(tab as any)}
+          slotsCount={slots.length}
+          areasCount={areas.length}
+          violationsCount={activeViolationsCount}
+          actions={
+            activeTab === 'slots' ? (
               <>
                 <Button 
                   onClick={() => setIsAllocateModalOpen(true)}
                   variant="outline"
-                  className="rounded-xl h-11 px-5 border-slate-300 dark:border-slate-700 gap-2 text-sm font-semibold"
+                  className="rounded-xl h-9 px-4 border-slate-300 dark:border-slate-700 gap-1.5 text-xs font-semibold"
                 >
-                  <Key className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+                  <Key className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
                   Quick Allocate
                 </Button>
                 <Button 
                   onClick={() => setIsCreateSlotModalOpen(true)}
-                  className="rounded-xl h-11 px-5 bg-indigo-600 hover:bg-indigo-700 text-white gap-2 text-sm font-semibold shadow-md shadow-indigo-600/20"
+                  className="rounded-xl h-9 px-4 bg-indigo-600 hover:bg-indigo-700 text-white gap-1.5 text-xs font-semibold shadow-sm shadow-indigo-600/20"
                 >
-                  <Plus className="w-4 h-4" />
-                  Add Parking Slot
+                  <Plus className="w-3.5 h-3.5" />
+                  Add Bay
                 </Button>
               </>
-            )}
-
-            {activeTab === 'areas' && (
+            ) : activeTab === 'areas' ? (
               <Button 
                 onClick={() => setIsCreateAreaModalOpen(true)}
-                className="rounded-xl h-11 px-5 bg-indigo-600 hover:bg-indigo-700 text-white gap-2 text-sm font-semibold shadow-md shadow-indigo-600/20"
+                className="rounded-xl h-9 px-4 bg-indigo-600 hover:bg-indigo-700 text-white gap-1.5 text-xs font-semibold shadow-sm shadow-indigo-600/20"
               >
-                <Plus className="w-4 h-4" />
-                Define Parking Zone
+                <Plus className="w-3.5 h-3.5" />
+                Add Zone
               </Button>
-            )}
-
-            {activeTab === 'violations' && (
+            ) : activeTab === 'violations' ? (
               <Button 
                 onClick={() => setIsReportViolationModalOpen(true)}
-                className="rounded-xl h-11 px-5 bg-rose-600 hover:bg-rose-700 text-white gap-2 text-sm font-semibold shadow-md shadow-rose-600/20"
+                className="rounded-xl h-9 px-4 bg-rose-600 hover:bg-rose-700 text-white gap-1.5 text-xs font-semibold shadow-sm shadow-rose-600/20"
               >
-                <AlertTriangle className="w-4 h-4" />
+                <AlertTriangle className="w-3.5 h-3.5" />
                 Report Infraction
               </Button>
-            )}
-          </div>
-        </div>
+            ) : null
+          }
+        />
 
-        {/* Filter Controls Bar */}
-        <div className="flex flex-col md:flex-row justify-between items-stretch md:items-center gap-4 bg-white dark:bg-slate-900 p-4 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-sm">
-          <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
-            <Input 
-              placeholder={`Search ${activeTab === 'slots' ? 'slot numbers, license plates...' : activeTab === 'areas' ? 'zone names...' : 'violations, plates...'}`}
-              className="pl-10 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border-0 h-11 text-sm focus:ring-2 focus:ring-indigo-500"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </div>
+        {/* Tab Content 1: Dashboard */}
+        {activeTab === 'dashboard' && (
+          <ParkoraAnalytics onNavigateTab={(tab) => setActiveTab(tab as any)} />
+        )}
 
-          {activeTab === 'slots' && (
-            <div className="flex flex-wrap items-center gap-3">
-              {/* Area Filter */}
-              <select
-                value={selectedAreaFilter}
-                onChange={(e) => setSelectedAreaFilter(e.target.value)}
-                className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80 px-3.5 h-11 text-xs font-semibold text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              >
-                <option value="ALL">All Zones</option>
-                {areas.map((a: any) => (
-                  <option key={a.id} value={a.id}>{a.name}</option>
-                ))}
-              </select>
+        {/* Tab Content 2: Visual Map */}
+        {activeTab === 'map' && (
+          <ParkoraMap />
+        )}
 
-              {/* Status Filter */}
-              <select
-                value={selectedStatusFilter}
-                onChange={(e) => setSelectedStatusFilter(e.target.value)}
-                className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80 px-3.5 h-11 text-xs font-semibold text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              >
-                <option value="ALL">All Statuses</option>
-                <option value="AVAILABLE">Available</option>
-                <option value="OCCUPIED">Occupied</option>
-                <option value="RESERVED">Reserved</option>
-                <option value="MAINTENANCE">Maintenance</option>
-              </select>
+        {/* Tab Content 3: Live Sessions */}
+        {activeTab === 'sessions' && (
+          <ParkoraSessions />
+        )}
 
-              {/* Type Filter */}
-              <select
-                value={selectedTypeFilter}
-                onChange={(e) => setSelectedTypeFilter(e.target.value)}
-                className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80 px-3.5 h-11 text-xs font-semibold text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              >
-                <option value="ALL">All Bay Types</option>
-                <option value="STANDARD">Standard</option>
-                <option value="COMPACT">Compact</option>
-                <option value="EV_CHARGING">EV Charging</option>
-                <option value="HANDICAPPED">Accessible</option>
-                <option value="VISITOR">Visitor</option>
-              </select>
-            </div>
-          )}
-        </div>
+        {/* Tab Content 4: Bookings & Digital Permits */}
+        {activeTab === 'reservations' && (
+          <ParkoraReservations />
+        )}
 
-        {/* Content View */}
-        <div className="space-y-4">
-          {activeTab === 'slots' && (
-            <div className="space-y-4">
-              {areas.length === 0 && !isLoadingAreas && (
-                <div className="p-4 rounded-2xl border border-amber-200 dark:border-amber-900/60 bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/30 dark:to-orange-950/20 text-slate-800 dark:text-slate-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-sm">
-                  <div className="flex items-start gap-3">
-                    <div className="p-2 rounded-xl bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-400 mt-0.5">
-                      <AlertTriangle className="w-5 h-5" />
-                    </div>
-                    <div>
-                      <h4 className="font-bold text-sm text-slate-900 dark:text-white">No Parking Zones Configured Yet</h4>
-                      <p className="text-xs text-slate-600 dark:text-slate-400 mt-0.5">
-                        You need to define at least one Parking Zone / Area (such as Basement B1, Tower A Ground, or a dedicated unit) before you can add parking slots.
-                      </p>
+        {/* Tab Content 5: Platform Engine Config */}
+        {activeTab === 'config' && (
+          <ParkoraConfig />
+        )}
+
+        {/* Tab Content 6: Parking Bays Management */}
+        {activeTab === 'slots' && (
+          <div className="space-y-6">
+            {/* Top KPI Metrics Cards for Bays */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+              <Card className="rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl shadow-sm hover:shadow-md transition-shadow">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Parking Zones</span>
+                    <div className="w-10 h-10 rounded-2xl bg-indigo-50 dark:bg-indigo-950/60 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
+                      <Building className="w-5 h-5" />
                     </div>
                   </div>
-                  <Button
-                    onClick={() => setIsCreateAreaModalOpen(true)}
-                    className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs flex-shrink-0 h-9 px-4 font-semibold shadow-sm"
-                  >
-                    <Plus className="w-3.5 h-3.5 mr-1" />
-                    Define Parking Zone First
-                  </Button>
-                </div>
-              )}
-              <DataTable 
-                columns={slotColumns} 
-                data={filteredSlots} 
-                isLoading={isLoadingSlots}
-                emptyMessage="No parking slots found matching your criteria. Click '+ Add Parking Slot' to get started."
-              />
-            </div>
-          )}
+                  <div className="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">{areas.length}</div>
+                  <p className="text-xs text-slate-400 mt-1.5 font-medium">Configured basements & zones</p>
+                </CardContent>
+              </Card>
 
-          {activeTab === 'areas' && (
+              <Card className="rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl shadow-sm hover:shadow-md transition-shadow">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Total Registered Bays</span>
+                    <div className="w-10 h-10 rounded-2xl bg-blue-50 dark:bg-blue-950/60 flex items-center justify-center text-blue-600 dark:text-blue-400">
+                      <Layers className="w-5 h-5" />
+                    </div>
+                  </div>
+                  <div className="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">{totalSlotsCount}</div>
+                  <p className="text-xs text-emerald-600 dark:text-emerald-400 mt-1.5 font-medium flex items-center gap-1">
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                    {availableSlotsCount} free & available
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card className="rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl shadow-sm hover:shadow-md transition-shadow">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Bay Occupancy</span>
+                    <div className="w-10 h-10 rounded-2xl bg-emerald-50 dark:bg-emerald-950/60 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
+                      <Car className="w-5 h-5" />
+                    </div>
+                  </div>
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">{occupancyRate}%</span>
+                    <span className="text-xs text-slate-400">({occupiedSlotsCount} / {totalSlotsCount})</span>
+                  </div>
+                  <div className="w-full bg-slate-100 dark:bg-slate-800 h-1.5 rounded-full overflow-hidden mt-3">
+                    <div className="bg-emerald-500 h-full rounded-full transition-all" style={{ width: `${occupancyRate}%` }} />
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl shadow-sm hover:shadow-md transition-shadow">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Violations & Fines</span>
+                    <div className="w-10 h-10 rounded-2xl bg-rose-50 dark:bg-rose-950/60 flex items-center justify-center text-rose-600 dark:text-rose-400">
+                      <AlertTriangle className="w-5 h-5" />
+                    </div>
+                  </div>
+                  <div className="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">{activeViolationsCount}</div>
+                  <p className="text-xs text-rose-500 mt-1.5 font-medium">Pending enforcement</p>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Filter Controls Bar for Bays */}
+            <div className="flex flex-col md:flex-row justify-between items-stretch md:items-center gap-4 bg-white dark:bg-slate-900 p-4 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-sm">
+              <div className="relative flex-1 max-w-md">
+                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
+                <Input 
+                  placeholder="Search slot numbers, license plates, notes..."
+                  className="pl-10 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border-0 h-11 text-sm focus:ring-2 focus:ring-indigo-500"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+              </div>
+
+              <div className="flex flex-wrap items-center gap-3">
+                {/* Area Filter */}
+                <select
+                  value={selectedAreaFilter}
+                  onChange={(e) => setSelectedAreaFilter(e.target.value)}
+                  className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80 px-3.5 h-11 text-xs font-semibold text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                >
+                  <option value="ALL">All Zones</option>
+                  {areas.map((a: any) => (
+                    <option key={a.id} value={a.id}>{a.name}</option>
+                  ))}
+                </select>
+
+                {/* Status Filter */}
+                <select
+                  value={selectedStatusFilter}
+                  onChange={(e) => setSelectedStatusFilter(e.target.value)}
+                  className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80 px-3.5 h-11 text-xs font-semibold text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                >
+                  <option value="ALL">All Statuses</option>
+                  <option value="AVAILABLE">Available</option>
+                  <option value="OCCUPIED">Occupied</option>
+                  <option value="RESERVED">Reserved</option>
+                  <option value="MAINTENANCE">Maintenance</option>
+                </select>
+
+                {/* Type Filter */}
+                <select
+                  value={selectedTypeFilter}
+                  onChange={(e) => setSelectedTypeFilter(e.target.value)}
+                  className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80 px-3.5 h-11 text-xs font-semibold text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                >
+                  <option value="ALL">All Bay Types</option>
+                  <option value="STANDARD">Standard</option>
+                  <option value="COMPACT">Compact</option>
+                  <option value="EV_CHARGING">EV Charging</option>
+                  <option value="HANDICAPPED">Accessible</option>
+                  <option value="VISITOR">Visitor</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Empty Zones Notice */}
+            {areas.length === 0 && !isLoadingAreas && (
+              <div className="p-4 rounded-2xl border border-amber-200 dark:border-amber-900/60 bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/30 dark:to-orange-950/20 text-slate-800 dark:text-slate-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-sm">
+                <div className="flex items-start gap-3">
+                  <div className="p-2 rounded-xl bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-400 mt-0.5">
+                    <AlertTriangle className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-sm text-slate-900 dark:text-white">No Parking Zones Configured Yet</h4>
+                    <p className="text-xs text-slate-600 dark:text-slate-400 mt-0.5">
+                      You need to define at least one Parking Zone / Area (such as Basement B1, Tower A Ground, or a dedicated unit) before you can add parking slots.
+                    </p>
+                  </div>
+                </div>
+                <Button
+                  onClick={() => setIsCreateAreaModalOpen(true)}
+                  className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs flex-shrink-0 h-9 px-4 font-semibold shadow-sm"
+                >
+                  <Plus className="w-3.5 h-3.5 mr-1" />
+                  Define Parking Zone First
+                </Button>
+              </div>
+            )}
+
+            {/* Bays DataTable */}
+            <DataTable 
+              columns={slotColumns} 
+              data={filteredSlots} 
+              isLoading={isLoadingSlots}
+              emptyMessage="No parking slots found matching your criteria. Click '+ Add Bay' to get started."
+            />
+          </div>
+        )}
+
+        {/* Tab Content 7: Parking Zones Management */}
+        {activeTab === 'areas' && (
+          <div className="space-y-6">
+            {/* Filter Controls Bar for Zones */}
+            <div className="flex flex-col md:flex-row justify-between items-stretch md:items-center gap-4 bg-white dark:bg-slate-900 p-4 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-sm">
+              <div className="relative flex-1 max-w-md">
+                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
+                <Input 
+                  placeholder="Search zone names, locations..."
+                  className="pl-10 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border-0 h-11 text-sm focus:ring-2 focus:ring-indigo-500"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+              </div>
+            </div>
+
+            {/* Zones DataTable */}
             <DataTable 
               columns={areaColumns} 
               data={filteredAreas} 
               isLoading={isLoadingAreas}
-              emptyMessage="No parking areas configured. Define your first zone/basement using '+ Define Parking Zone'."
+              emptyMessage="No parking areas configured. Define your first zone/basement using '+ Add Zone'."
             />
-          )}
+          </div>
+        )}
 
-          {activeTab === 'violations' && (
+        {/* Tab Content 8: Violations Management */}
+        {activeTab === 'violations' && (
+          <div className="space-y-6">
+            {/* Filter Controls Bar for Violations */}
+            <div className="flex flex-col md:flex-row justify-between items-stretch md:items-center gap-4 bg-white dark:bg-slate-900 p-4 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-sm">
+              <div className="relative flex-1 max-w-md">
+                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
+                <Input 
+                  placeholder="Search violations, license plates, notes..."
+                  className="pl-10 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border-0 h-11 text-sm focus:ring-2 focus:ring-indigo-500"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+              </div>
+            </div>
+
+            {/* Violations DataTable */}
             <DataTable 
               columns={violationColumns} 
               data={filteredViolations} 
               isLoading={isLoadingViolations}
               emptyMessage="No parking compliance violations reported on record."
             />
-          )}
-        </div>
+          </div>
+        )}
 
         {/* Modal 1: Define Parking Area */}
         <Modal 

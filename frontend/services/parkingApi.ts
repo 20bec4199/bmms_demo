@@ -39,7 +39,18 @@ const axiosBaseQuery =
 export const parkingApi = createApi({
   reducerPath: 'parkingApi',
   baseQuery: axiosBaseQuery(),
-  tagTypes: ['ParkingArea', 'ParkingSlot', 'ParkingAllocation', 'ParkingViolation'],
+  tagTypes: [
+    'ParkingArea', 
+    'ParkingSlot', 
+    'ParkingAllocation', 
+    'ParkingViolation',
+    'ParkingConfig',
+    'ParkingRule',
+    'ParkingSession',
+    'ParkingReservation',
+    'ParkingPermit',
+    'ParkingRate'
+  ],
   endpoints: (builder) => ({
     getParkingAreas: builder.query<any, void>({
       query: () => ({ url: '/parking/areas', method: 'GET' }),
@@ -109,6 +120,166 @@ export const parkingApi = createApi({
       }),
       invalidatesTags: ['ParkingViolation'],
     }),
+    getMyParking: builder.query<any, void>({
+      query: () => ({ url: '/parking/my-parking', method: 'GET' }),
+      providesTags: ['ParkingSlot', 'ParkingAllocation'],
+    }),
+    gateCheckIn: builder.mutation({
+      query: (data) => ({
+        url: '/parking/gate/check-in',
+        method: 'POST',
+        data,
+      }),
+      invalidatesTags: ['ParkingSlot', 'ParkingAllocation', 'ParkingSession'],
+    }),
+    gateCheckOut: builder.mutation({
+      query: (data) => ({
+        url: '/parking/gate/check-out',
+        method: 'POST',
+        data,
+      }),
+      invalidatesTags: ['ParkingSlot', 'ParkingAllocation', 'ParkingSession'],
+    }),
+
+    // --- PARKORA Extensions ---
+    getParkingConfig: builder.query<any, void>({
+      query: () => ({ url: '/parking/config', method: 'GET' }),
+      providesTags: ['ParkingConfig'],
+    }),
+    updateParkingConfig: builder.mutation({
+      query: (data) => ({
+        url: '/parking/config',
+        method: 'PATCH',
+        data,
+      }),
+      invalidatesTags: ['ParkingConfig'],
+    }),
+    getParkingRules: builder.query<any, void>({
+      query: () => ({ url: '/parking/rules', method: 'GET' }),
+      providesTags: ['ParkingRule'],
+    }),
+    createParkingRule: builder.mutation({
+      query: (data) => ({
+        url: '/parking/rules',
+        method: 'POST',
+        data,
+      }),
+      invalidatesTags: ['ParkingRule'],
+    }),
+    deleteParkingRule: builder.mutation({
+      query: (id) => ({
+        url: `/parking/rules/${id}`,
+        method: 'DELETE',
+      }),
+      invalidatesTags: ['ParkingRule'],
+    }),
+    getVisualMap: builder.query<any, any>({
+      query: (params) => ({
+        url: '/parking/map',
+        method: 'GET',
+        params,
+      }),
+      providesTags: ['ParkingSlot', 'ParkingArea'],
+    }),
+    updateSlotStatus: builder.mutation({
+      query: ({ id, ...data }) => ({
+        url: `/parking/slots/${id}/status`,
+        method: 'PATCH',
+        data,
+      }),
+      invalidatesTags: ['ParkingSlot'],
+    }),
+    getParkingSessions: builder.query<any, any>({
+      query: (params) => ({
+        url: '/parking/sessions',
+        method: 'GET',
+        params,
+      }),
+      providesTags: ['ParkingSession'],
+    }),
+    createSessionEntry: builder.mutation({
+      query: (data) => ({
+        url: '/parking/sessions/entry',
+        method: 'POST',
+        data,
+      }),
+      invalidatesTags: ['ParkingSession', 'ParkingSlot'],
+    }),
+    createSessionExit: builder.mutation({
+      query: (data) => ({
+        url: '/parking/sessions/exit',
+        method: 'POST',
+        data,
+      }),
+      invalidatesTags: ['ParkingSession', 'ParkingSlot'],
+    }),
+    getReservations: builder.query<any, any>({
+      query: (params) => ({
+        url: '/parking/reservations',
+        method: 'GET',
+        params,
+      }),
+      providesTags: ['ParkingReservation'],
+    }),
+    createReservation: builder.mutation({
+      query: (data) => ({
+        url: '/parking/reservations',
+        method: 'POST',
+        data,
+      }),
+      invalidatesTags: ['ParkingReservation', 'ParkingSlot'],
+    }),
+    getPermits: builder.query<any, any>({
+      query: (params) => ({
+        url: '/parking/permits',
+        method: 'GET',
+        params,
+      }),
+      providesTags: ['ParkingPermit'],
+    }),
+    createPermit: builder.mutation({
+      query: (data) => ({
+        url: '/parking/permits',
+        method: 'POST',
+        data,
+      }),
+      invalidatesTags: ['ParkingPermit'],
+    }),
+    getRates: builder.query<any, void>({
+      query: () => ({ url: '/parking/rates', method: 'GET' }),
+      providesTags: ['ParkingRate'],
+    }),
+    createRate: builder.mutation({
+      query: (data) => ({
+        url: '/parking/rates',
+        method: 'POST',
+        data,
+      }),
+      invalidatesTags: ['ParkingRate'],
+    }),
+    recordAccessEvent: builder.mutation({
+      query: (data) => ({
+        url: '/parking/events',
+        method: 'POST',
+        data,
+      }),
+    }),
+    updateViolationWorkflow: builder.mutation({
+      query: ({ id, ...data }) => ({
+        url: `/parking/violations/${id}/workflow`,
+        method: 'PATCH',
+        data,
+      }),
+      invalidatesTags: ['ParkingViolation'],
+    }),
+    getParkingAnalytics: builder.query<any, any>({
+      query: (params) => ({
+        url: '/parking/analytics',
+        method: 'GET',
+        params,
+      }),
+      providesTags: ['ParkingSlot', 'ParkingSession', 'ParkingViolation'],
+    }),
   }),
 });
 
@@ -123,4 +294,27 @@ export const {
   useDeallocateSlotMutation,
   useGetViolationsQuery,
   useReportViolationMutation,
+  useGetMyParkingQuery,
+  useGateCheckInMutation,
+  useGateCheckOutMutation,
+  useGetParkingConfigQuery,
+  useUpdateParkingConfigMutation,
+  useGetParkingRulesQuery,
+  useCreateParkingRuleMutation,
+  useDeleteParkingRuleMutation,
+  useGetVisualMapQuery,
+  useUpdateSlotStatusMutation,
+  useGetParkingSessionsQuery,
+  useCreateSessionEntryMutation,
+  useCreateSessionExitMutation,
+  useGetReservationsQuery,
+  useCreateReservationMutation,
+  useGetPermitsQuery,
+  useCreatePermitMutation,
+  useGetRatesQuery,
+  useCreateRateMutation,
+  useRecordAccessEventMutation,
+  useUpdateViolationWorkflowMutation,
+  useGetParkingAnalyticsQuery,
 } = parkingApi;
+

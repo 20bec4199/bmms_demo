@@ -8,8 +8,13 @@ import { GlobalWarningPopup } from '../components/ui/GlobalWarningPopup';
 import './globals.css';
 
 export const metadata = {
-  title: 'SIVM - Building Management System',
-  description: 'Enterprise SaaS Property & Facility Management Platform',
+  title: 'BMMS — Intelligent Property & Facility Management Platform',
+  description: 'BMMS connects property management, facilities, maintenance, parking, security and resident operations in one intelligent platform.',
+  openGraph: {
+    title: 'BMMS — One Intelligent Property Operating System',
+    description: 'Manage buildings, towers, floors, units, residents, parking, work orders and security through one connected platform.',
+    type: 'website' as const,
+  },
 };
 
 export default function RootLayout({

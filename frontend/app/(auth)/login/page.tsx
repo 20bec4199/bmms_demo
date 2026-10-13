@@ -9,6 +9,7 @@ import { useRouter } from 'next/navigation';
 import { useDispatch, useSelector } from 'react-redux';
 import { useLoginMutation } from '../../../services/authApi';
 import { setCredentials } from '../../../store/slices/authSlice';
+import { RootState } from '../../../store/store';
 import { Building2, Key, ShieldCheck, Mail, Lock, ArrowRight } from 'lucide-react';
 
 const loginSchema = z.object({
@@ -24,7 +25,7 @@ export default function LoginPage() {
   const [login, { isLoading }] = useLoginMutation();
   const [error, setError] = React.useState<string | null>(null);
   
-  const { isAuthenticated, user } = useSelector((state: any) => state.auth);
+  const { isAuthenticated, user } = useSelector((state: RootState) => state.auth);
 
   React.useEffect(() => {
     if (isAuthenticated && user) {
@@ -37,6 +38,8 @@ export default function LoginPage() {
         router.push('/resident/dashboard');
       } else if (roles.includes('TECHNICIAN')) {
         router.push('/technician/dashboard');
+      } else if (roles.includes('SECURITY_GUARD')) {
+        router.push('/security/dashboard');
       } else {
         router.push('/dashboard');
       }
@@ -62,14 +65,20 @@ export default function LoginPage() {
         router.push('/resident/dashboard');
       } else if (roles.includes('TECHNICIAN')) {
         router.push('/technician/dashboard');
+      } else if (roles.includes('SECURITY_GUARD')) {
+        router.push('/security/dashboard');
       } else {
         router.push('/dashboard');
       }
-    } catch (err: any) {
-      if (err.data?.message?.includes('locked')) {
+    } catch (error) {
+      const errorData = typeof error === 'object' && error !== null && 'data' in error ? error.data : undefined;
+      const message = typeof errorData === 'object' && errorData !== null && 'message' in errorData && typeof errorData.message === 'string'
+        ? errorData.message
+        : 'Invalid email or password';
+      if (message.includes('locked')) {
         router.push('/account-locked');
       } else {
-        setError(err.data?.message || 'Invalid email or password');
+        setError(message);
       }
     }
   };
@@ -171,7 +180,7 @@ export default function LoginPage() {
 
         <div className="mt-8 text-center">
           <p className="text-slate-500 text-sm">
-            Don't have an account?{' '}
+            Do not have an account?{' '}
             <Link href="/register" className="text-white font-medium hover:text-blue-400 transition-colors">
               Register Organization
             </Link>

@@ -4,8 +4,8 @@ import React, { useState } from 'react';
 import { motion, Variants } from 'framer-motion';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Card, CardHeader, CardContent } from '@/components/ui/Card';
-import { 
-  CreditCard, Wrench, Users, Calendar, 
+import {
+  CreditCard, Wrench, Users, Calendar,
   Megaphone, FileText, PhoneCall, Vote, Activity, Plus,
   Flame, ChevronRight, X
 } from 'lucide-react';
@@ -37,13 +37,13 @@ export default function ResidentDashboard() {
   const user = useSelector((state: RootState) => state.auth.user);
   const [isAlertDismissed, setIsAlertDismissed] = useState(false);
   const [selectedAlertModal, setSelectedAlertModal] = useState<any | null>(null);
-  
+
   // Real Data Fetching
   const { data: complaintsData, isLoading: isLoadingComplaints } = useGetComplaintsQuery({});
   const { data: bookingsData } = useGetFacilityBookingsQuery({});
   const { data: visitorsData } = useGetVisitorRegistrationsQuery({});
   const { data: alertsResponse } = useGetAlertsQuery({ take: 5 });
-  
+
   const allComplaints = complaintsData?.data || [];
   const allBookings = bookingsData?.data || [];
   const allVisitors = visitorsData?.data || [];
@@ -52,7 +52,7 @@ export default function ResidentDashboard() {
 
   const resolvedCount = allComplaints.filter((c: any) => c.status === 'RESOLVED' || c.status === 'CLOSED' || c.status === 'COMPLETED').length;
   const unresolvedCount = allComplaints.length - resolvedCount;
-  
+
   const upcomingBookings = allBookings.filter((b: any) => new Date(b.startTime) > new Date()).length || 0;
   const expectedVisitors = allVisitors.filter((v: any) => v.status === 'EXPECTED' || (new Date(v.expectedArrival) > new Date() && v.status !== 'CHECKED_IN')).length || 0;
 
@@ -62,13 +62,13 @@ export default function ResidentDashboard() {
     const data = days.map(day => ({ name: day, Complaints: 0, Bookings: 0, Visitors: 0 }));
 
     allComplaints.forEach((c: any) => {
-      if(c.createdAt) data[new Date(c.createdAt).getDay()].Complaints++;
+      if (c.createdAt) data[new Date(c.createdAt).getDay()].Complaints++;
     });
     allBookings.forEach((b: any) => {
-      if(b.createdAt) data[new Date(b.createdAt).getDay()].Bookings++;
+      if (b.createdAt) data[new Date(b.createdAt).getDay()].Bookings++;
     });
     allVisitors.forEach((v: any) => {
-      if(v.createdAt) data[new Date(v.createdAt).getDay()].Visitors++;
+      if (v.createdAt) data[new Date(v.createdAt).getDay()].Visitors++;
     });
 
     // If perfectly 0, add a tiny bit of mock data to keep the chart beautiful
@@ -80,29 +80,27 @@ export default function ResidentDashboard() {
   }, [allComplaints, allBookings, allVisitors]);
   return (
     <motion.div initial="hidden" animate="show" variants={containerVariants} className="space-y-8">
-      
+
       {/* Active Broadcast Alert Banner */}
       {activeAlert && !isAlertDismissed && (
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          className={`relative overflow-hidden rounded-3xl p-5 border shadow-lg flex flex-col sm:flex-row sm:items-center justify-between gap-4 ${
-            activeAlert.type === 'EMERGENCY'
+          className={`relative overflow-hidden rounded-3xl p-5 border shadow-lg flex flex-col sm:flex-row sm:items-center justify-between gap-4 ${activeAlert.type === 'EMERGENCY'
               ? 'bg-gradient-to-r from-rose-500/15 via-rose-500/10 to-transparent border-rose-500/30 text-rose-900 dark:text-rose-100'
               : activeAlert.type === 'MAINTENANCE'
-              ? 'bg-gradient-to-r from-amber-500/15 via-amber-500/10 to-transparent border-amber-500/30 text-amber-900 dark:text-amber-100'
-              : 'bg-gradient-to-r from-indigo-500/15 via-indigo-500/10 to-transparent border-indigo-500/30 text-indigo-900 dark:text-indigo-100'
-          }`}
+                ? 'bg-gradient-to-r from-amber-500/15 via-amber-500/10 to-transparent border-amber-500/30 text-amber-900 dark:text-amber-100'
+                : 'bg-gradient-to-r from-indigo-500/15 via-indigo-500/10 to-transparent border-indigo-500/30 text-indigo-900 dark:text-indigo-100'
+            }`}
         >
           <div className="flex items-center gap-3.5">
-            <div className={`w-11 h-11 rounded-2xl flex items-center justify-center flex-shrink-0 ${
-              activeAlert.type === 'EMERGENCY' ? 'bg-rose-500 text-white shadow-md shadow-rose-500/30 animate-pulse' :
-              activeAlert.type === 'MAINTENANCE' ? 'bg-amber-500 text-white shadow-md shadow-amber-500/30' :
-              'bg-indigo-600 text-white shadow-md shadow-indigo-600/30'
-            }`}>
+            <div className={`w-11 h-11 rounded-2xl flex items-center justify-center flex-shrink-0 ${activeAlert.type === 'EMERGENCY' ? 'bg-rose-500 text-white shadow-md shadow-rose-500/30 animate-pulse' :
+                activeAlert.type === 'MAINTENANCE' ? 'bg-amber-500 text-white shadow-md shadow-amber-500/30' :
+                  'bg-indigo-600 text-white shadow-md shadow-indigo-600/30'
+              }`}>
               {activeAlert.type === 'EMERGENCY' ? <Flame className="w-6 h-6" /> :
-               activeAlert.type === 'MAINTENANCE' ? <Wrench className="w-6 h-6" /> :
-               <Megaphone className="w-6 h-6" />}
+                activeAlert.type === 'MAINTENANCE' ? <Wrench className="w-6 h-6" /> :
+                  <Megaphone className="w-6 h-6" />}
             </div>
             <div>
               <div className="flex items-center gap-2">
@@ -176,15 +174,15 @@ export default function ResidentDashboard() {
 
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
         <div>
-          <PageHeader 
-            title="Resident Dashboard" 
-            description={`Welcome back, ${user?.firstName || 'Resident'}. Your community at a glance.`} 
+          <PageHeader
+            title="Resident Dashboard"
+            description={`Welcome back, ${user?.firstName || 'Resident'}. Your community at a glance.`}
           />
         </div>
-        
+
         <div className="flex items-center gap-3 pb-6">
           <Link href="/resident/visitors" passHref>
-            <motion.button 
+            <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-sm font-semibold rounded-xl shadow-[0_0_20px_rgba(37,99,235,0.3)] transition-colors"
@@ -197,7 +195,7 @@ export default function ResidentDashboard() {
 
       {/* --- HERO STATS (Reusable StatCards) --- */}
       <motion.div variants={itemVariants} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <StatCard 
+        <StatCard
           title="Pending Bills"
           value="$0.00"
           icon={<CreditCard className="w-6 h-6 text-emerald-500" />}
@@ -208,7 +206,7 @@ export default function ResidentDashboard() {
           sparklineData={[0, 0, 0, 0, 0, 0, 0]}
         />
         <Link href="/resident/complaints" passHref className="block">
-          <StatCard 
+          <StatCard
             title="Unresolved Complaints"
             value={isLoadingComplaints ? '...' : unresolvedCount.toString()}
             icon={<Wrench className="w-6 h-6 text-amber-500" />}
@@ -220,7 +218,7 @@ export default function ResidentDashboard() {
           />
         </Link>
         <Link href="/resident/facilities" passHref className="block">
-          <StatCard 
+          <StatCard
             title="Facility Bookings"
             value={upcomingBookings.toString()}
             icon={<Calendar className="w-6 h-6 text-blue-500" />}
@@ -232,7 +230,7 @@ export default function ResidentDashboard() {
           />
         </Link>
         <Link href="/resident/visitors" passHref className="block">
-          <StatCard 
+          <StatCard
             title="Expected Visitors"
             value={expectedVisitors.toString()}
             icon={<Users className="w-6 h-6 text-indigo-500" />}
@@ -262,18 +260,18 @@ export default function ResidentDashboard() {
                 <AreaChart data={activityData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                   <defs>
                     <linearGradient id="colorVisitors" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#6366f1" stopOpacity={0.3}/>
-                      <stop offset="95%" stopColor="#6366f1" stopOpacity={0}/>
+                      <stop offset="5%" stopColor="#6366f1" stopOpacity={0.3} />
+                      <stop offset="95%" stopColor="#6366f1" stopOpacity={0} />
                     </linearGradient>
                     <linearGradient id="colorBookings" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3}/>
-                      <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+                      <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
+                      <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(150, 150, 150, 0.1)" />
                   <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#888' }} dy={10} />
                   <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#888' }} />
-                  <RechartsTooltip 
+                  <RechartsTooltip
                     contentStyle={{ backgroundColor: 'rgba(15, 23, 42, 0.95)', border: 'none', borderRadius: '8px', color: '#fff' }}
                     itemStyle={{ color: '#fff' }}
                   />
@@ -299,7 +297,7 @@ export default function ResidentDashboard() {
 
       {/* --- DETAILED WIDGETS --- */}
       <motion.div variants={itemVariants} className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        
+
         {/* Recent Announcements */}
         <Card>
           <CardHeader>
@@ -368,7 +366,7 @@ export default function ResidentDashboard() {
                 </div>
               </div>
             </div>
-            
+
             <div className="mt-4 grid grid-cols-2 gap-4">
               <Button variant="outline" className="w-full rounded-xl border-slate-200 dark:border-white/10 dark:text-white dark:hover:bg-white/5">
                 Update Profile

@@ -9,7 +9,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 export const NotificationDropdown = () => {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
-  
+
   const { data: notificationsData, isLoading } = useGetNotificationsQuery({ take: 10 });
   const [markAsRead] = useMarkAsReadMutation();
   const [markAllAsRead] = useMarkAllAsReadMutation();
@@ -47,8 +47,8 @@ export const NotificationDropdown = () => {
 
   return (
     <div className="relative" ref={dropdownRef}>
-      <button 
-        type="button" 
+      <button
+        type="button"
         className="relative -m-2.5 p-2.5 text-slate-400 hover:text-slate-500 dark:hover:text-slate-300 transition-colors"
         onClick={() => setIsOpen(!isOpen)}
       >
@@ -64,7 +64,7 @@ export const NotificationDropdown = () => {
 
       <AnimatePresence>
         {isOpen && (
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, y: 10, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 10, scale: 0.95 }}
@@ -77,7 +77,7 @@ export const NotificationDropdown = () => {
                 Notifications
               </h3>
               {unreadCount > 0 && (
-                <button 
+                <button
                   onClick={handleMarkAllAsRead}
                   className="text-xs text-blue-600 hover:text-blue-800 dark:text-blue-400 hover:underline font-medium transition-all"
                 >
@@ -85,7 +85,7 @@ export const NotificationDropdown = () => {
                 </button>
               )}
             </div>
-            
+
             <div className="max-h-[400px] overflow-y-auto custom-scrollbar">
               {isLoading ? (
                 <div className="p-8 text-center text-sm text-gray-500 flex flex-col items-center">
@@ -93,8 +93,8 @@ export const NotificationDropdown = () => {
                   Loading notifications...
                 </div>
               ) : notifications.length === 0 ? (
-                <motion.div 
-                  initial={{ opacity: 0 }} animate={{ opacity: 1 }} 
+                <motion.div
+                  initial={{ opacity: 0 }} animate={{ opacity: 1 }}
                   className="p-8 text-center flex flex-col items-center justify-center"
                 >
                   <div className="w-12 h-12 bg-gray-50 dark:bg-gray-800 rounded-full flex items-center justify-center mb-3">
@@ -106,11 +106,11 @@ export const NotificationDropdown = () => {
               ) : (
                 <ul className="divide-y divide-gray-50 dark:divide-gray-800/50">
                   {notifications.map((notification: any, i: number) => (
-                    <motion.li 
+                    <motion.li
                       initial={{ opacity: 0, x: 20 }}
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: i * 0.05 }}
-                      key={notification.id} 
+                      key={notification.id}
                       className={`p-4 hover:bg-gray-50/80 dark:hover:bg-gray-800/80 transition-all cursor-pointer flex gap-4 ${!notification.isRead ? 'bg-blue-50/40 dark:bg-blue-900/20' : ''}`}
                       onClick={(e) => {
                         if (!notification.isRead) handleMarkAsRead(notification.id, e);
@@ -128,7 +128,7 @@ export const NotificationDropdown = () => {
                         </p>
                         <div className="flex items-center gap-1.5 mt-2 text-xs text-gray-400 font-medium">
                           <Clock size={12} />
-                          <span>{new Date(notification.createdAt).toLocaleDateString()} {new Date(notification.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                          <span>{new Date(notification.createdAt).toLocaleDateString()} {new Date(notification.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                         </div>
                       </div>
                     </motion.li>

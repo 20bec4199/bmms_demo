@@ -3,12 +3,12 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { 
-  Building2, 
-  Users, 
-  ShieldCheck, 
-  Settings, 
-  LayoutDashboard, 
+import {
+  Building2,
+  Users,
+  ShieldCheck,
+  Settings,
+  LayoutDashboard,
   LogOut,
   Building,
   FileText,
@@ -23,7 +23,13 @@ import {
   Box,
   Clock,
   Wrench,
-  ChevronDown
+  ChevronDown,
+  Car,
+  MapPin,
+  AlertTriangle,
+  ClipboardList,
+  UserRound,
+  Megaphone,
 } from 'lucide-react';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '@/store/store';
@@ -51,22 +57,23 @@ export const Sidebar = () => {
   const roles = useSelector((state: RootState) => state.auth.user?.roles || []);
   const sidebarOpen = useSelector((state: RootState) => state.ui.sidebarOpen);
   const [collapsedCategories, setCollapsedCategories] = useState<Record<string, boolean>>({});
-  
+
   // Dynamic Module Checking
   const { data: myModulesResponse } = useGetMyModulesQuery(undefined, {
     skip: !roles.includes('ORGANIZATION_ADMIN') && !roles.includes('BUILDING_MANAGER') && !roles.includes('RESIDENT') && !roles.includes('TENANT') && !roles.includes('UNIT_OWNER') && !roles.includes('TECHNICIAN'),
   });
-  
+
   const reduxModules = useSelector((state: RootState) => (state.auth.user as any)?.organizationModules) || [];
   // Use the backend response as source of truth if available, otherwise fallback to Redux session state
   const enabledModules = myModulesResponse?.data?.map((m: any) => m.code) || reduxModules;
   const hasModule = (module: string) => enabledModules.includes(module);
-  
+
   const isPlatformAdmin = roles.includes('PLATFORM_SUPER_ADMIN');
   const isResident = roles.includes('RESIDENT') || roles.includes('TENANT') || roles.includes('UNIT_OWNER');
   const isBuildingManager = roles.includes('BUILDING_MANAGER') && !roles.includes('ORGANIZATION_ADMIN');
   const isTechnician = roles.includes('TECHNICIAN') && !roles.includes('ORGANIZATION_ADMIN');
-  
+  const isSecurityGuard = roles.includes('SECURITY_GUARD') && !roles.includes('ORGANIZATION_ADMIN');
+
   const toggleCategory = (category: string) => {
     setCollapsedCategories((prev) => ({
       ...prev,
@@ -124,8 +131,10 @@ export const Sidebar = () => {
         { title: 'Users', href: '/organization/users', icon: <Users size={20} /> },
         { title: 'Access Management', href: '/organization/roles', icon: <ShieldCheck size={20} /> },
         { title: 'Technicians', href: '/organization/technicians', icon: <Users size={20} /> },
+        { title: 'Security Guards', href: '/organization/security-guards', icon: <ShieldCheck size={20} /> },
       ],
       'System & Security': [
+        { title: 'Security Deployment', href: '/organization/security-deployment', icon: <ShieldCheck size={20} /> },
         { title: 'Activity & Audit', href: '/organization/activity', icon: <ShieldAlert size={20} /> },
         { title: 'Settings', href: '/organization/settings', icon: <Settings size={20} /> },
       ]
@@ -172,9 +181,15 @@ export const Sidebar = () => {
     { title: 'Dashboard', href: '/resident/dashboard', icon: <LayoutDashboard size={20} /> },
     { title: 'Complaints', href: '/resident/complaints', icon: <FileText size={20} /> },
     { title: 'Visitors', href: '/resident/visitors', icon: <Users size={20} /> },
+    { title: 'Announcements', href: '/resident/announcements', icon: <Megaphone size={20} /> },
+    { title: 'Notifications', href: '/resident/notifications', icon: <Bell size={20} /> },
+    { title: 'My Profile', href: '/resident/profile', icon: <UserRound size={20} /> },
   ];
   if (hasModule('FACILITY_MANAGEMENT') || hasModule('FACILITY_BOOKING')) {
     residentItems.push({ title: 'Facility Reservations', href: '/resident/facilities', icon: <Calendar size={20} /> });
+  }
+  if (hasModule('PARKING_MANAGEMENT') || hasModule('PARKING')) {
+    residentItems.push({ title: 'My Parking', href: '/resident/parking', icon: <Car size={20} /> });
   }
   const residentGroups: NavGroup[] = [
     { items: residentItems },
@@ -214,10 +229,35 @@ export const Sidebar = () => {
     },
   ];
 
+  const securityGroups: NavGroup[] = [
+    {
+      category: 'Overview',
+      items: [
+        { title: 'Dashboard', href: '/security/dashboard', icon: <LayoutDashboard size={20} /> },
+        { title: 'My Posts', href: '/security/posts', icon: <ShieldCheck size={20} /> },
+      ],
+    },
+    {
+      category: 'Gate & Access',
+      items: [
+        { title: 'Visitor Check-In', href: '/security/visitors', icon: <Users size={20} /> },
+        { title: 'Access Log', href: '/security/access-log', icon: <ClipboardList size={20} /> },
+      ],
+    },
+    {
+      category: 'Security Operations',
+      items: [
+        { title: 'Incidents', href: '/security/incidents', icon: <AlertTriangle size={20} /> },
+        { title: 'Patrol Routes', href: '/security/patrols', icon: <MapPin size={20} /> },
+      ],
+    },
+  ];
+
   let navGroups = orgGroups;
   if (isPlatformAdmin) navGroups = platformGroups;
   else if (isResident) navGroups = residentGroups;
   else if (isTechnician) navGroups = technicianGroups;
+  else if (isSecurityGuard) navGroups = securityGroups;
   else if (isBuildingManager) navGroups = orgGroups;
 
   const router = useRouter();
@@ -225,7 +265,7 @@ export const Sidebar = () => {
   const handleLogout = async () => {
     try {
       await logoutApi({}).unwrap();
-    } catch (err) {}
+    } catch (err) { }
     dispatch(logoutAction());
     router.push('/login');
   };
@@ -257,9 +297,8 @@ export const Sidebar = () => {
                   <span className="truncate">{group.category}</span>
                   <ChevronDown
                     size={14}
-                    className={`text-slate-400 dark:text-slate-500 transform transition-transform duration-200 ${
-                      isCollapsed ? '-rotate-90' : 'rotate-0'
-                    }`}
+                    className={`text-slate-400 dark:text-slate-500 transform transition-transform duration-200 ${isCollapsed ? '-rotate-90' : 'rotate-0'
+                      }`}
                   />
                 </button>
               )}
@@ -270,11 +309,10 @@ export const Sidebar = () => {
                     <Link
                       key={item.title}
                       href={item.href}
-                      className={`group flex items-center px-3 py-2 text-sm font-medium rounded-xl transition-all duration-200 ${
-                        isActive
+                      className={`group flex items-center px-3 py-2 text-sm font-medium rounded-xl transition-all duration-200 ${isActive
                           ? 'bg-blue-50 text-blue-700 dark:bg-blue-500/10 dark:text-blue-400 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.1)] font-semibold'
                           : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-white/5 dark:hover:text-white'
-                      }`}
+                        }`}
                       onClick={() => {
                         if (window.innerWidth < 768) {
                           dispatch(toggleSidebar());
@@ -308,17 +346,15 @@ export const Sidebar = () => {
   return (
     <>
       {/* Mobile sidebar overlay */}
-      <div 
-        className={`fixed inset-0 z-40 bg-gray-900/80 backdrop-blur-sm transition-opacity md:hidden ${
-          sidebarOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
-        }`}
+      <div
+        className={`fixed inset-0 z-40 bg-gray-900/80 backdrop-blur-sm transition-opacity md:hidden ${sidebarOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
+          }`}
         onClick={() => dispatch(toggleSidebar())}
       />
-      
+
       {/* Sidebar container (responsive) */}
-      <div className={`fixed inset-y-0 left-0 z-50 w-64 transform transition-transform duration-300 ease-in-out ${
-        sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-      }`}>
+      <div className={`fixed inset-y-0 left-0 z-50 w-64 transform transition-transform duration-300 ease-in-out ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+        }`}>
         {SidebarContent}
       </div>
     </>

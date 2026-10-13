@@ -1,5 +1,5 @@
 import { 
-  Building, Building2, Box, Calendar, FileText, Clock, Users, ShieldCheck, Megaphone, LifeBuoy, FolderOpen
+  Building, Building2, Box, Calendar, Car, FileText, Clock, Users, ShieldCheck, Megaphone, LifeBuoy, FolderOpen
 } from 'lucide-react';
 
 export interface ModuleConfig {
@@ -64,7 +64,7 @@ export const MODULES_CONFIG: ModuleConfig[] = [
     brandName: 'SmartiPark',
     category: 'Facilities & Assets',
     items: [
-      { title: 'Parking', href: '/organization/parking', icon: <Building size={20} /> },
+      { title: 'SmartiPark', href: '/organization/parking', icon: <Car size={20} /> },
     ]
   },
   {
@@ -110,6 +110,7 @@ export const MODULES_CONFIG: ModuleConfig[] = [
     category: 'System & Security',
     items: [
       { title: 'Security Monitoring', href: '/organization/security', icon: <ShieldCheck size={20} /> },
+      { title: 'Security Guards', href: '/organization/security-guards', icon: <Users size={20} /> },
     ]
   }
 ];
